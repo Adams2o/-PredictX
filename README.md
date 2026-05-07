@@ -1,84 +1,75 @@
-# GenLayer Football Market
+# PredictX
 
-Next.js frontend for GenLayer Football Market - AI-powered football match predictions on GenLayer blockchain.
+> Predict crypto prices. Verify on-chain. Win on GenLayer.
 
-## Setup
+PredictX is a decentralized crypto price prediction market built on GenLayer blockchain. Users create price prediction markets for top crypto assets like BTC, ETH, and SOL. When a market reaches its deadline, GenLayer's AI validators fetch live price data from CoinGecko and resolve the outcome on-chain — trustlessly and transparently.
 
-1. Install dependencies:
+## Features
 
-**Using bun:**
+- 🔮 Create crypto price prediction markets
+- 📈 Predict ABOVE or BELOW a target price
+- 🤖 AI-powered resolution via CoinGecko
+- ⛓️ On-chain verification via GenLayer
+- 🦊 MetaMask wallet integration
+- 🏆 Leaderboard and points system
+
+## Supported Assets
+
+BTC, ETH, SOL, BNB, XRP, ADA, DOGE, AVAX, DOT, MATIC
+
+## Tech Stack
+
+- **Frontend:** Next.js 16, TypeScript, Tailwind CSS
+- **Blockchain:** GenLayer (AI-native blockchain)
+- **Smart Contract:** Python (GenLayer)
+- **Price Data:** CoinGecko API
+- **Wallet:** MetaMask
+
+## Getting Started
+
+### Prerequisites
+- Node.js LTS
+- MetaMask browser extension
+- GenLayer Studio account
+
+### Installation
+
+Clone the repo:
 ```bash
-bun install
+git clone https://github.com/Adams2o/PredictX.git
+cd PredictX
 ```
 
-**Using npm:**
+Install dependencies:
 ```bash
 npm install
 ```
 
-2. Create `.env` file:
-```bash
-cp .env.example .env
+Create `.env.local` file:
+```env
+NEXT_PUBLIC_GENLAYER_RPC_URL=https://studio.genlayer.com/api
+NEXT_PUBLIC_GENLAYER_CHAIN_ID=61999
+NEXT_PUBLIC_GENLAYER_CHAIN_NAME=GenLayer Studio
+NEXT_PUBLIC_GENLAYER_SYMBOL=GEN
+NEXT_PUBLIC_CONTRACT_ADDRESS=your_contract_address_here
 ```
 
-3. Configure environment variables:
-   - `NEXT_PUBLIC_CONTRACT_ADDRESS` - GenLayer Football Betting contract address
-   - `NEXT_PUBLIC_STUDIO_URL` - GenLayer Studio URL (default: https://studio.genlayer.com/api)
-
-## Development
-
-**Using bun:**
+Run the app:
 ```bash
-bun dev
+.\node_modules\.bin\next dev
 ```
 
-**Using npm:**
-```bash
-npm run dev
-```
+Open [http://localhost:3000](http://localhost:3000)
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+## Smart Contract
 
-## Build
+The smart contract is written in Python for GenLayer and deployed on GenLayer Studio. It:
 
-**Using bun:**
-```bash
-bun run build
-bun start
-```
+1. Accepts a crypto asset, target price, direction and deadline
+2. On resolution, fetches live price from CoinGecko
+3. Uses AI to parse the price and determine the outcome
+4. Records YES or NO outcome on-chain
 
-**Using npm:**
-```bash
-npm run build
-npm start
-```
+## License
 
-## Tech Stack
-
-- **Next.js 15** - React framework with App Router
-- **TypeScript** - Type safety
-- **Tailwind CSS v4** - Styling with custom glass-morphism theme
-- **genlayer-js** - GenLayer blockchain SDK
-- **TanStack Query (React Query)** - Data fetching and caching
-- **Radix UI** - Accessible component primitives
-- **shadcn/ui** - Pre-built UI components
-
-## Wallet Management
-
-The app uses GenLayer's account system:
-- **Create Account**: Generate a new private key
-- **Import Account**: Import existing private key
-- **Export Account**: Export your private key (secured)
-- **Disconnect**: Clear stored account data
-
-Accounts are stored in browser's localStorage for development convenience.
-
-## Features
-
-- **Create Bets**: Create football match predictions with team names, game date, and predicted winner (Team 1, Team 2, or Draw)
-- **View Bets**: Real-time bet table with match details, predictions, status, and owners
-- **Resolve Bets**: Bet owners can resolve matches using GenLayer's AI to verify actual results
-- **Leaderboard**: Track top players by points earned from correct predictions
-- **Player Stats**: View your points and ranking in the community
-- **Glass-morphism UI**: Premium dark theme with OKLCH colors, backdrop blur effects, and smooth animations
-- **Real-time Updates**: Automatic data fetching with 3-second polling intervals via TanStack Query
+MIT
