@@ -1,17 +1,22 @@
 /**
- * TypeScript types for GenLayer Crypto Prediction Market contract
+ * TypeScript types for PredictX Market contract
  */
 
-export interface Bet {
+export interface Prediction {
   id: string;
   asset: string;
-  target_price: string | number;
   direction: string;
+  target_price: number;
+  current_price_at_creation: number;
   deadline: string;
-  has_resolved: boolean;
-  resolution_price?: string | number;
-  outcome?: string;
+  stake_amount: number;
+  multiplier: number;
+  potential_return: number;
   owner: string;
+  has_resolved: boolean;
+  is_cancelled: boolean;
+  outcome: string;
+  resolution_price: number;
 }
 
 export interface LeaderboardEntry {
@@ -26,23 +31,13 @@ export interface TransactionReceipt {
   [key: string]: any;
 }
 
-export interface BetFilters {
-  resolved?: boolean;
-  owner?: string;
+export interface MarketStats {
+  total: number;
+  resolved: number;
+  pending: number;
+  cancelled: number;
+  wins: number;
 }
 
-export interface MarketResolutionData {
-  has_resolved: boolean;
-  outcome: string;
-  resolution_price: number;
-}
-
-export interface MarketInfo {
-  asset: string;
-  target_price: number;
-  direction: string;
-  deadline: string;
-  has_resolved: boolean;
-  resolution_price: number;
-  outcome: string;
-}
+// Keep Bet as alias for backward compatibility
+export type Bet = Prediction;
