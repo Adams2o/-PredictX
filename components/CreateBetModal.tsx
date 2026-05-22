@@ -22,24 +22,6 @@ const SUPPORTED_ASSETS = [
   "ADA", "DOGE", "AVAX", "DOT", "MATIC",
 ];
 
-function estimateMultiplier(targetPrice: number, direction: string): { multiplier: number; label: string; color: string } {
-  // We estimate multiplier since we don't have live price here
-  // Real multiplier is calculated on-chain with live price
-  if (!targetPrice || targetPrice <= 0) return { multiplier: 1, label: "", color: "" };
-
-  // Return estimated based on direction and round numbers
-  // This is just a UI hint — actual multiplier comes from contract
-  return { multiplier: 0, label: "Calculated on-chain", color: "text-accent" };
-}
-
-function getMultiplierDisplay(multiplier: number): { label: string; color: string } {
-  const x = multiplier / 100;
-  if (x <= 1.5) return { label: "Low Risk", color: "text-blue-400" };
-  if (x <= 3) return { label: "Medium Risk", color: "text-yellow-400" };
-  if (x <= 8) return { label: "High Risk", color: "text-orange-400" };
-  return { label: "Very High Risk", color: "text-red-400" };
-}
-
 export function CreateBetModal() {
   const { isConnected, address, isLoading } = useWallet();
   const { createBet, isCreating, isSuccess } = useCreateBet();
@@ -163,17 +145,19 @@ export function CreateBetModal() {
                     setAsset(a);
                     setErrors({ ...errors, asset: "" });
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold border-2 transition-all ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
                     asset === a
-                      ? "border-accent bg-accent/20 text-accent"
-                      : "border-white/10 hover:border-white/30 text-muted-foreground"
+                      ? "border-accent bg-accent/20 text-accent shadow-lg shadow-accent/20 scale-105"
+                      : "border-white/10 text-muted-foreground hover:border-accent/60 hover:bg-accent/10 hover:text-accent hover:scale-105"
                   }`}
                 >
                   {a}
                 </button>
               ))}
             </div>
-            {errors.asset && <p className="text-xs text-destructive">{errors.asset}</p>}
+            {errors.asset && (
+              <p className="text-xs text-destructive">{errors.asset}</p>
+            )}
           </div>
 
           {/* Direction */}
@@ -186,10 +170,10 @@ export function CreateBetModal() {
                   setDirection("ABOVE");
                   setErrors({ ...errors, direction: "" });
                 }}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
                   direction === "ABOVE"
-                    ? "border-green-500 bg-green-500/20 text-green-400"
-                    : "border-white/10 hover:border-green-500/40"
+                    ? "border-green-500 bg-green-500/20 text-green-400 shadow-lg shadow-green-500/20"
+                    : "border-white/10 hover:border-green-500/60 hover:bg-green-500/10 hover:text-green-400"
                 }`}
               >
                 <TrendingUp className="w-5 h-5 mx-auto mb-1" />
@@ -202,10 +186,10 @@ export function CreateBetModal() {
                   setDirection("BELOW");
                   setErrors({ ...errors, direction: "" });
                 }}
-                className={`p-3 rounded-lg border-2 transition-all ${
+                className={`p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
                   direction === "BELOW"
-                    ? "border-red-500 bg-red-500/20 text-red-400"
-                    : "border-white/10 hover:border-red-500/40"
+                    ? "border-red-500 bg-red-500/20 text-red-400 shadow-lg shadow-red-500/20"
+                    : "border-white/10 hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-400"
                 }`}
               >
                 <TrendingDown className="w-5 h-5 mx-auto mb-1" />
@@ -213,10 +197,12 @@ export function CreateBetModal() {
                 <div className="text-xs text-muted-foreground">Price goes lower</div>
               </button>
             </div>
-            {errors.direction && <p className="text-xs text-destructive">{errors.direction}</p>}
+            {errors.direction && (
+              <p className="text-xs text-destructive">{errors.direction}</p>
+            )}
           </div>
 
-          {/* Target Price + Deadline side by side on desktop */}
+          {/* Target Price + Deadline */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="targetPrice" className="flex items-center gap-2 text-sm">
@@ -235,7 +221,9 @@ export function CreateBetModal() {
                 }}
                 className={errors.targetPrice ? "border-destructive" : ""}
               />
-              {errors.targetPrice && <p className="text-xs text-destructive">{errors.targetPrice}</p>}
+              {errors.targetPrice && (
+                <p className="text-xs text-destructive">{errors.targetPrice}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -253,7 +241,9 @@ export function CreateBetModal() {
                 }}
                 className={errors.deadline ? "border-destructive" : ""}
               />
-              {errors.deadline && <p className="text-xs text-destructive">{errors.deadline}</p>}
+              {errors.deadline && (
+                <p className="text-xs text-destructive">{errors.deadline}</p>
+              )}
             </div>
           </div>
 
@@ -276,19 +266,24 @@ export function CreateBetModal() {
                 }}
                 className={errors.stakeAmount ? "border-destructive" : ""}
               />
-              {/* Quick stake buttons */}
               {[10, 50, 100, 500].map((amount) => (
                 <button
                   key={amount}
                   type="button"
                   onClick={() => setStakeAmount(String(amount))}
-                  className="px-2 py-1 text-xs rounded border border-white/10 hover:border-accent/50 text-muted-foreground hover:text-accent transition-all whitespace-nowrap"
+                  className={`px-2 py-1 text-xs rounded border-2 transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                    stakeAmount === String(amount)
+                      ? "border-accent bg-accent/20 text-accent"
+                      : "border-white/10 text-muted-foreground hover:border-accent/60 hover:bg-accent/10 hover:text-accent"
+                  }`}
                 >
                   {amount}
                 </button>
               ))}
             </div>
-            {errors.stakeAmount && <p className="text-xs text-destructive">{errors.stakeAmount}</p>}
+            {errors.stakeAmount && (
+              <p className="text-xs text-destructive">{errors.stakeAmount}</p>
+            )}
           </div>
 
           {/* Multiplier Info */}
@@ -297,31 +292,20 @@ export function CreateBetModal() {
               <Zap className="w-3 h-3" />
               Multiplier is calculated live on-chain based on distance from current price
             </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Distance &lt;2%</span>
-                <span className="text-blue-400 font-bold">1.2x</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Distance 5-10%</span>
-                <span className="text-yellow-400 font-bold">2x</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Distance 10-20%</span>
-                <span className="text-orange-400 font-bold">3x</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Distance 20-35%</span>
-                <span className="text-red-400 font-bold">5x</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Distance 35-50%</span>
-                <span className="text-red-500 font-bold">8x</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Distance 75%+</span>
-                <span className="text-purple-400 font-bold">20x</span>
-              </div>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {[
+                { range: "< 2%", mult: "1.2x", color: "text-blue-400" },
+                { range: "2-5%", mult: "1.5x", color: "text-blue-300" },
+                { range: "5-10%", mult: "2x", color: "text-yellow-400" },
+                { range: "10-20%", mult: "3x", color: "text-orange-400" },
+                { range: "20-35%", mult: "5x", color: "text-orange-500" },
+                { range: "35%+", mult: "8-20x", color: "text-red-400" },
+              ].map((tier) => (
+                <div key={tier.range} className="flex justify-between">
+                  <span className="text-muted-foreground">{tier.range}</span>
+                  <span className={`font-bold ${tier.color}`}>{tier.mult}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -343,8 +327,12 @@ export function CreateBetModal() {
                 )}
               </p>
               <div className="flex justify-between mt-2 text-xs">
-                <span className="text-muted-foreground">Stake: <span className="text-white font-bold">{stake} GEN</span></span>
-                <span className="text-muted-foreground">Multiplier: <span className="text-accent font-bold">Calculated on-chain</span></span>
+                <span className="text-muted-foreground">
+                  Stake: <span className="text-white font-bold">{stake} GEN</span>
+                </span>
+                <span className="text-muted-foreground">
+                  Multiplier: <span className="text-accent font-bold">Calculated on-chain</span>
+                </span>
               </div>
             </div>
           )}
