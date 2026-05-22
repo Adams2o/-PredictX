@@ -145,11 +145,33 @@ export function CreateBetModal() {
                     setAsset(a);
                     setErrors({ ...errors, asset: "" });
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border-2 transition-all duration-200 cursor-pointer ${
-                    asset === a
-                      ? "border-accent bg-accent/20 text-accent shadow-lg shadow-accent/20 scale-105"
-                      : "border-white/10 text-muted-foreground hover:border-accent/60 hover:bg-accent/10 hover:text-accent hover:scale-105"
-                  }`}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    border: asset === a ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.1)",
+                    background: asset === a ? "rgba(34,197,94,0.2)" : "transparent",
+                    color: asset === a ? "#22c55e" : "#888",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    transform: asset === a ? "scale(1.05)" : "scale(1)",
+                    boxShadow: asset === a ? "0 0 12px rgba(34,197,94,0.3)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (asset !== a) {
+                      e.currentTarget.style.border = "2px solid #22c55e";
+                      e.currentTarget.style.background = "rgba(34,197,94,0.1)";
+                      e.currentTarget.style.color = "#22c55e";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (asset !== a) {
+                      e.currentTarget.style.border = "2px solid rgba(255,255,255,0.1)";
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = "#888";
+                    }
+                  }}
                 >
                   {a}
                 </button>
@@ -170,31 +192,70 @@ export function CreateBetModal() {
                   setDirection("ABOVE");
                   setErrors({ ...errors, direction: "" });
                 }}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                  direction === "ABOVE"
-                    ? "border-green-500 bg-green-500/20 text-green-400 shadow-lg shadow-green-500/20"
-                    : "border-white/10 hover:border-green-500/60 hover:bg-green-500/10 hover:text-green-400"
-                }`}
+                style={{
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: direction === "ABOVE" ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.1)",
+                  background: direction === "ABOVE" ? "rgba(34,197,94,0.2)" : "transparent",
+                  color: direction === "ABOVE" ? "#22c55e" : "#888",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  boxShadow: direction === "ABOVE" ? "0 0 12px rgba(34,197,94,0.3)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (direction !== "ABOVE") {
+                    e.currentTarget.style.border = "2px solid #22c55e";
+                    e.currentTarget.style.background = "rgba(34,197,94,0.1)";
+                    e.currentTarget.style.color = "#22c55e";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (direction !== "ABOVE") {
+                    e.currentTarget.style.border = "2px solid rgba(255,255,255,0.1)";
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "#888";
+                  }
+                }}
               >
-                <TrendingUp className="w-5 h-5 mx-auto mb-1" />
-                <div className="font-semibold text-sm">ABOVE</div>
-                <div className="text-xs text-muted-foreground">Price goes higher</div>
+                <TrendingUp style={{ width: "20px", height: "20px", margin: "0 auto 4px" }} />
+                <div style={{ fontWeight: "600", fontSize: "14px" }}>ABOVE</div>
+                <div style={{ fontSize: "12px", color: "#666" }}>Price goes higher</div>
               </button>
+
               <button
                 type="button"
                 onClick={() => {
                   setDirection("BELOW");
                   setErrors({ ...errors, direction: "" });
                 }}
-                className={`p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer ${
-                  direction === "BELOW"
-                    ? "border-red-500 bg-red-500/20 text-red-400 shadow-lg shadow-red-500/20"
-                    : "border-white/10 hover:border-red-500/60 hover:bg-red-500/10 hover:text-red-400"
-                }`}
+                style={{
+                  padding: "12px",
+                  borderRadius: "8px",
+                  border: direction === "BELOW" ? "2px solid #ef4444" : "2px solid rgba(255,255,255,0.1)",
+                  background: direction === "BELOW" ? "rgba(239,68,68,0.2)" : "transparent",
+                  color: direction === "BELOW" ? "#ef4444" : "#888",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  boxShadow: direction === "BELOW" ? "0 0 12px rgba(239,68,68,0.3)" : "none",
+                }}
+                onMouseEnter={(e) => {
+                  if (direction !== "BELOW") {
+                    e.currentTarget.style.border = "2px solid #ef4444";
+                    e.currentTarget.style.background = "rgba(239,68,68,0.1)";
+                    e.currentTarget.style.color = "#ef4444";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (direction !== "BELOW") {
+                    e.currentTarget.style.border = "2px solid rgba(255,255,255,0.1)";
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "#888";
+                  }
+                }}
               >
-                <TrendingDown className="w-5 h-5 mx-auto mb-1" />
-                <div className="font-semibold text-sm">BELOW</div>
-                <div className="text-xs text-muted-foreground">Price goes lower</div>
+                <TrendingDown style={{ width: "20px", height: "20px", margin: "0 auto 4px" }} />
+                <div style={{ fontWeight: "600", fontSize: "14px" }}>BELOW</div>
+                <div style={{ fontSize: "12px", color: "#666" }}>Price goes lower</div>
               </button>
             </div>
             {errors.direction && (
@@ -271,11 +332,29 @@ export function CreateBetModal() {
                   key={amount}
                   type="button"
                   onClick={() => setStakeAmount(String(amount))}
-                  className={`px-2 py-1 text-xs rounded border-2 transition-all duration-200 cursor-pointer whitespace-nowrap ${
-                    stakeAmount === String(amount)
-                      ? "border-accent bg-accent/20 text-accent"
-                      : "border-white/10 text-muted-foreground hover:border-accent/60 hover:bg-accent/10 hover:text-accent"
-                  }`}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "12px",
+                    borderRadius: "6px",
+                    border: stakeAmount === String(amount) ? "2px solid #22c55e" : "2px solid rgba(255,255,255,0.1)",
+                    background: stakeAmount === String(amount) ? "rgba(34,197,94,0.2)" : "transparent",
+                    color: stakeAmount === String(amount) ? "#22c55e" : "#888",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    whiteSpace: "nowrap" as const,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (stakeAmount !== String(amount)) {
+                      e.currentTarget.style.border = "2px solid #22c55e";
+                      e.currentTarget.style.color = "#22c55e";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (stakeAmount !== String(amount)) {
+                      e.currentTarget.style.border = "2px solid rgba(255,255,255,0.1)";
+                      e.currentTarget.style.color = "#888";
+                    }
+                  }}
                 >
                   {amount}
                 </button>
@@ -369,5 +448,4 @@ export function CreateBetModal() {
       </DialogContent>
     </Dialog>
   );
-}/ /   u p d a t e d  
- 
+}
