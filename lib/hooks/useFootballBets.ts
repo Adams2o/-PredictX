@@ -31,7 +31,6 @@ export function useFootballBetsContract(): PredictXContract | null {
   return contract;
 }
 
-// All predictions (market view)
 export function useBets() {
   const contract = useFootballBetsContract();
 
@@ -48,11 +47,10 @@ export function useBets() {
     },
     refetchOnWindowFocus: false,
     retry: false,
-    staleTime: 15000,
+    staleTime: 30000,
   });
 }
 
-// My predictions only
 export function useMyPredictions() {
   const contract = useFootballBetsContract();
   const { address } = useWallet();
@@ -60,22 +58,35 @@ export function useMyPredictions() {
   return useQuery<Prediction[], Error>({
     queryKey: ["myPredictions", address],
     queryFn: async () => {
-      if (!contract || !address) return [];
+      if (!address) return [];
+
+      // Always try localStorage first for instant display
+      const cacheKey = `predictions_${address.toLowerCase()}`;
+      const cached = localStorage.getItem(cacheKey);
+      const cachedData: Prediction[] = cached ? JSON.parse(cached) : [];
+
+      if (!contract) return cachedData;
+
       try {
-        return await contract.getMyPredictions(address);
+        const result = await contract.getMyPredictions(address);
+        if (result && result.length > 0) {
+          // Update cache with fresh data
+          localStorage.setItem(cacheKey, JSON.stringify(result));
+          return result;
+        }
+        return cachedData;
       } catch (err) {
         console.error("useMyPredictions error:", err);
-        return [];
+        return cachedData;
       }
     },
     refetchOnWindowFocus: false,
     retry: false,
-    enabled: !!address && !!contract,
+    enabled: !!address,
     staleTime: 15000,
   });
 }
 
-// Player points
 export function usePlayerPoints(address: string | null) {
   const contract = useFootballBetsContract();
 
@@ -92,11 +103,10 @@ export function usePlayerPoints(address: string | null) {
     refetchOnWindowFocus: false,
     retry: false,
     enabled: !!address && !!contract,
-    staleTime: 15000,
+    staleTime: 30000,
   });
 }
 
-// Leaderboard
 export function useLeaderboard() {
   const contract = useFootballBetsContract();
 
@@ -112,11 +122,10 @@ export function useLeaderboard() {
     },
     refetchOnWindowFocus: false,
     retry: false,
-    staleTime: 15000,
+    staleTime: 30000,
   });
 }
 
-// Market stats
 export function useMarketStats() {
   const contract = useFootballBetsContract();
 
@@ -132,11 +141,10 @@ export function useMarketStats() {
     },
     refetchOnWindowFocus: false,
     retry: false,
-    staleTime: 15000,
+    staleTime: 30000,
   });
 }
 
-// Create prediction
 export function useCreateBet() {
   const contract = useFootballBetsContract();
   const { address } = useWallet();
@@ -169,7 +177,33 @@ export function useCreateBet() {
         address
       );
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      // Save to localStorage immediately for instant display
+      if (address) {
+        const cacheKey = `predictions_${address.toLowerCase()}`;
+        const newPrediction: Prediction = {
+          id: String(Date.now()),
+          asset: variables.asset,
+          direction: variables.direction,
+          target_price: variables.targetPrice,
+          current_price_at_creation: 0,
+          deadline: variables.deadline,
+          stake_amount: variables.stakeAmount,
+          multiplier: 200,
+          potential_return: variables.stakeAmount * 2,
+          owner: address,
+          has_resolved: false,
+          is_cancelled: false,
+          outcome: "PENDING",
+          resolution_price: 0,
+        };
+
+        const cached = localStorage.getItem(cacheKey);
+        const existing: Prediction[] = cached ? JSON.parse(cached) : [];
+        existing.unshift(newPrediction);
+        localStorage.setItem(cacheKey, JSON.stringify(existing));
+      }
+
       queryClient.invalidateQueries({ queryKey: ["predictions"] });
       queryClient.invalidateQueries({ queryKey: ["myPredictions"] });
       queryClient.invalidateQueries({ queryKey: ["playerPoints"] });
@@ -197,7 +231,6 @@ export function useCreateBet() {
   };
 }
 
-// Cancel prediction
 export function useCancelPrediction() {
   const contract = useFootballBetsContract();
   const { address } = useWallet();
@@ -213,14 +246,29 @@ export function useCancelPrediction() {
       setCancellingId(predictionId);
       return contract.cancelPrediction(predictionId, address);
     },
-    onSuccess: () => {
+    onSuccess: (data, predictionId) => {
+      // Update localStorage
+      if (address) {
+        const cacheKey = `predictions_${address.toLowerCase()}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const existing: Prediction[] = JSON.parse(cached);
+          const updated = existing.map(p =>
+            p.id === predictionId
+              ? { ...p, is_cancelled: true, outcome: "CANCELLED" }
+              : p
+          );
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["predictions"] });
       queryClient.invalidateQueries({ queryKey: ["myPredictions"] });
       queryClient.invalidateQueries({ queryKey: ["marketStats"] });
       setIsCancelling(false);
       setCancellingId(null);
-      success("Prediction cancelled!", {
-        description: "Your stake will be refunded.",
+      success("Order cancelled!", {
+        description: "Your stake has been refunded minus a 2 GEN cancellation fee.",
       });
     },
     onError: (err: any) => {
@@ -241,7 +289,6 @@ export function useCancelPrediction() {
   };
 }
 
-// Resolve prediction
 export function useResolveBet() {
   const contract = useFootballBetsContract();
   const { address } = useWallet();
@@ -257,7 +304,27 @@ export function useResolveBet() {
       setResolvingBetId(predictionId);
       return contract.resolvePrediction(predictionId);
     },
-    onSuccess: () => {
+    onSuccess: (data, predictionId) => {
+      // Update localStorage
+      if (address) {
+        const cacheKey = `predictions_${address.toLowerCase()}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const existing: Prediction[] = JSON.parse(cached);
+          const updated = existing.map(p =>
+            p.id === predictionId
+              ? {
+                  ...p,
+                  has_resolved: true,
+                  outcome: (data as any)?.outcome || "PENDING",
+                  resolution_price: (data as any)?.resolution_price || 0,
+                }
+              : p
+          );
+          localStorage.setItem(cacheKey, JSON.stringify(updated));
+        }
+      }
+
       queryClient.invalidateQueries({ queryKey: ["predictions"] });
       queryClient.invalidateQueries({ queryKey: ["myPredictions"] });
       queryClient.invalidateQueries({ queryKey: ["playerPoints"] });
