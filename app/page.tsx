@@ -3,8 +3,11 @@
 import { Navbar } from "@/components/Navbar";
 import { BetsTable } from "@/components/BetsTable";
 import { Leaderboard } from "@/components/Leaderboard";
+import { useAutoResolveNotification } from "@/lib/hooks/useFootballBets";
 
 export default function HomePage() {
+  useAutoResolveNotification();
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -12,7 +15,6 @@ export default function HomePage() {
       <main className="flex-grow pt-16 sm:pt-20 pb-12 px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
 
-          {/* Hero Section */}
           <div className="text-center mb-6 sm:mb-8 animate-fade-in px-2">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-4 leading-tight">
               Crypto Price Prediction Market
@@ -23,7 +25,6 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Main Grid */}
           <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
             <div className="w-full lg:col-span-8 animate-slide-up order-2 lg:order-1">
               <BetsTable />
@@ -33,7 +34,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* How it Works */}
           <div className="mt-6 sm:mt-8 brand-card p-4 sm:p-6 md:p-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
             <h2 className="text-xl sm:text-2xl font-bold mb-4">How it Works</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
@@ -49,22 +49,20 @@ export default function HomePage() {
                 <div className="text-accent font-bold text-base sm:text-lg">2. Earn Multiplied Returns</div>
                 <p className="text-sm text-muted-foreground">
                   Multipliers range from 1.2x for safe predictions to 20x for bold ones.
-                  The riskier your prediction, the bigger your potential return.
-                  Cancel anytime before resolution to get your stake back.
+                  Cancel anytime before the deadline for a small 2 GEN fee to get your stake back.
                 </p>
               </div>
               <div className="space-y-2">
-                <div className="text-accent font-bold text-base sm:text-lg">3. Resolve and Win</div>
+                <div className="text-accent font-bold text-base sm:text-lg">3. Auto-Resolution</div>
                 <p className="text-sm text-muted-foreground">
-                  After the deadline, resolve your prediction. GenLayer AI fetches
+                  Markets resolve automatically on the deadline date. GenLayer AI fetches
                   the live price from CoinGecko and verifies the outcome on-chain.
-                  Winners receive their stake multiplied by their odds.
+                  You get notified when your prediction resolves!
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Multiplier Table */}
           <div className="mt-4 sm:mt-6 brand-card p-4 sm:p-6 animate-fade-in" style={{ animationDelay: "250ms" }}>
             <h2 className="text-xl font-bold mb-4">Multiplier Table</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2 sm:gap-3">
@@ -86,7 +84,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Supported Assets */}
           <div className="mt-4 sm:mt-6 brand-card p-4 sm:p-6 animate-fade-in" style={{ animationDelay: "300ms" }}>
             <h2 className="text-xl font-bold mb-4">Supported Assets</h2>
             <div className="flex flex-wrap gap-2 sm:gap-3">

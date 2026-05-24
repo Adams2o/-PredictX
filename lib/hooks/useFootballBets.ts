@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import PredictXContract from "../contracts/FootballBets";
 import { getContractAddress, getStudioUrl } from "../genlayer/client";
 import { useWallet } from "../genlayer/wallet";
@@ -60,7 +60,6 @@ export function useMyPredictions() {
     queryFn: async () => {
       if (!address) return [];
 
-      // Always try localStorage first for instant display
       const cacheKey = `predictions_${address.toLowerCase()}`;
       const cached = localStorage.getItem(cacheKey);
       const cachedData: Prediction[] = cached ? JSON.parse(cached) : [];
@@ -70,7 +69,6 @@ export function useMyPredictions() {
       try {
         const result = await contract.getMyPredictions(address);
         if (result && result.length > 0) {
-          // Update cache with fresh data
           localStorage.setItem(cacheKey, JSON.stringify(result));
           return result;
         }
@@ -132,7 +130,9 @@ export function useMarketStats() {
   return useQuery<MarketStats, Error>({
     queryKey: ["marketStats"],
     queryFn: async () => {
-      if (!contract) return { total: 0, resolved: 0, pending: 0, cancelled: 0, wins: 0 };
+      if (!contract) {
+        return { total: 0, resolved: 0, pending: 0, cancelled: 0, wins: 0 };
+      }
       try {
         return await contract.getStats();
       } catch (err) {
@@ -178,7 +178,6 @@ export function useCreateBet() {
       );
     },
     onSuccess: (data, variables) => {
-      // Save to localStorage immediately for instant display
       if (address) {
         const cacheKey = `predictions_${address.toLowerCase()}`;
         const newPrediction: Prediction = {
@@ -211,7 +210,7 @@ export function useCreateBet() {
       queryClient.invalidateQueries({ queryKey: ["marketStats"] });
       setIsCreating(false);
       success("Prediction created!", {
-        description: "Your prediction has been recorded on-chain.",
+        description: "Your prediction will auto-resolve on the deadline date.",
       });
     },
     onError: (err: any) => {
@@ -247,7 +246,6 @@ export function useCancelPrediction() {
       return contract.cancelPrediction(predictionId, address);
     },
     onSuccess: (data, predictionId) => {
-      // Update localStorage
       if (address) {
         const cacheKey = `predictions_${address.toLowerCase()}`;
         const cached = localStorage.getItem(cacheKey);
@@ -305,7 +303,6 @@ export function useResolveBet() {
       return contract.resolvePrediction(predictionId);
     },
     onSuccess: (data, predictionId) => {
-      // Update localStorage
       if (address) {
         const cacheKey = `predictions_${address.toLowerCase()}`;
         const cached = localStorage.getItem(cacheKey);
@@ -353,4 +350,35 @@ export function useResolveBet() {
     resolveBet: mutation.mutate,
     resolveBetAsync: mutation.mutateAsync,
   };
+}
+
+// Auto-resolve notification hook
+export function useAutoResolveNotification() {
+  const { data: myPredictions } = useMyPredictions();
+  const { address } = useWallet();
+
+  useEffect(() => {
+    if (!myPredictions || !address) return;
+
+    const notifKey = `notified_${address.toLowerCase()}`;
+    const notified: string[] = JSON.parse(
+      localStorage.getItem(notifKey) || "[]"
+    );
+
+    myPredictions.forEach((p) => {
+      if (p.has_resolved && !notified.includes(p.id)) {
+        if (p.outcome === "WIN") {
+          success(`🎉 Prediction Won!`, {
+            description: `Your ${p.asset} ${p.direction} $${Number(p.target_price).toLocaleString()} resolved at $${Number(p.resolution_price).toLocaleString()}. You won ${p.potential_return} GEN!`,
+          });
+        } else if (p.outcome === "LOSS") {
+          error(`📉 Prediction Lost`, {
+            description: `Your ${p.asset} ${p.direction} $${Number(p.target_price).toLocaleString()} resolved at $${Number(p.resolution_price).toLocaleString()}. Better luck next time!`,
+          });
+        }
+        notified.push(p.id);
+        localStorage.setItem(notifKey, JSON.stringify(notified));
+      }
+    });
+  }, [myPredictions, address]);
 }
