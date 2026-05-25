@@ -6,7 +6,7 @@ import {
   TrendingDown, XCircle, ChevronDown, ChevronUp
 } from "lucide-react";
 import {
-  useBets, useResolveBet, useFootballBetsContract,
+  useBets, useFootballBetsContract,
   useMyPredictions, useCancelPrediction
 } from "@/lib/hooks/useFootballBets";
 import { useWallet } from "@/lib/genlayer/wallet";
@@ -46,9 +46,7 @@ function PredictionCard({
   currentAddress,
   isConnected,
   isWalletLoading,
-  onResolve,
   onCancel,
-  isResolving,
   isCancelling,
   showCancel = false,
 }: {
@@ -56,17 +54,16 @@ function PredictionCard({
   currentAddress: string | null;
   isConnected: boolean;
   isWalletLoading: boolean;
-  onResolve: (id: string) => void;
   onCancel: (id: string) => void;
-  isResolving: boolean;
   isCancelling: boolean;
   showCancel?: boolean;
 }) {
   const isOwner = currentAddress?.toLowerCase() === prediction.owner?.toLowerCase();
-  const canResolve = isConnected && currentAddress && isOwner &&
-    !prediction.has_resolved && !prediction.is_cancelled && !isWalletLoading;
   const canCancel = isConnected && currentAddress && isOwner &&
     !prediction.has_resolved && !prediction.is_cancelled && !isWalletLoading;
+
+  const today = new Date().toISOString().split("T")[0];
+  const isExpired = prediction.deadline <= today;
 
   return (
     <div className="brand-card p-4 space-y-3 animate-fade-in">
@@ -91,6 +88,11 @@ function PredictionCard({
           <Badge variant="outline" className="text-muted-foreground border-muted/30">
             <XCircle className="w-3 h-3 mr-1" />
             Cancelled
+          </Badge>
+        ) : isExpired ? (
+          <Badge variant="outline" className="text-orange-400 border-orange-500/30">
+            <Clock className="w-3 h-3 mr-1" />
+            Resolving...
           </Badge>
         ) : (
           <Badge variant="outline" className="text-yellow-400 border-yellow-500/30">
@@ -148,36 +150,28 @@ function PredictionCard({
         </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
-        {canResolve && (
-          <Button
-            onClick={() => onResolve(prediction.id)}
-            disabled={isResolving}
-            size="sm"
-            variant="gradient"
-            className="flex-1"
-          >
-            {isResolving ? (
-              <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Resolving...</>
-            ) : "Resolve"}
-          </Button>
-        )}
-        {canCancel && showCancel && (
-          <Button
-            onClick={() => onCancel(prediction.id)}
-            disabled={isCancelling}
-            size="sm"
-            variant="outline"
-            className="flex-1 text-destructive hover:text-destructive"
-          >
-            {isCancelling ? (
-              <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Cancelling...</>
-            ) : (
-              <><XCircle className="w-3 h-3 mr-1" />Cancel Order</>
-            )}
-          </Button>
-        )}
-      </div>
+      {/* Only show cancel — no resolve button */}
+      {canCancel && showCancel && !isExpired && (
+        <Button
+          onClick={() => onCancel(prediction.id)}
+          disabled={isCancelling}
+          size="sm"
+          variant="outline"
+          className="w-full text-destructive hover:text-destructive"
+        >
+          {isCancelling ? (
+            <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Cancelling...</>
+          ) : (
+            <><XCircle className="w-3 h-3 mr-1" />Cancel Order (2 GEN fee)</>
+          )}
+        </Button>
+      )}
+
+      {isExpired && !prediction.has_resolved && !prediction.is_cancelled && (
+        <p className="text-xs text-orange-400 text-center">
+          Auto-resolving... this may take a few minutes
+        </p>
+      )}
     </div>
   );
 }
@@ -185,21 +179,21 @@ function PredictionCard({
 function MyOrders() {
   const { data: myPredictions, isLoading } = useMyPredictions();
   const { address, isConnected, isLoading: isWalletLoading } = useWallet();
-  const { resolveBet, isResolving, resolvingBetId } = useResolveBet();
   const { cancelPrediction, isCancelling, cancellingId } = useCancelPrediction();
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const handleResolve = (id: string) => {
-    const confirmed = confirm("Resolve this prediction? This will fetch the live price from CoinGecko.");
-    if (confirmed) resolveBet(id);
-  };
-
   const handleCancel = (id: string) => {
-    const confirmed = confirm("Cancel this prediction? Your stake will be refunded.");
+    const confirmed = confirm(
+      "Cancel this prediction? You will be charged a 2 GEN cancellation fee and receive the rest of your stake back."
+    );
     if (confirmed) cancelPrediction(id);
   };
 
   if (!isConnected) return null;
+
+  const activeCount = myPredictions?.filter(
+    p => !p.has_resolved && !p.is_cancelled
+  ).length || 0;
 
   return (
     <div className="brand-card p-4 sm:p-6">
@@ -209,9 +203,9 @@ function MyOrders() {
       >
         <h2 className="text-lg font-bold flex items-center gap-2">
           My Orders
-          {myPredictions && myPredictions.filter(p => !p.has_resolved && !p.is_cancelled).length > 0 && (
+          {activeCount > 0 && (
             <Badge className="bg-accent/20 text-accent border-accent/30 text-xs">
-              {myPredictions.filter(p => !p.has_resolved && !p.is_cancelled).length} active
+              {activeCount} active
             </Badge>
           )}
         </h2>
@@ -227,7 +221,7 @@ function MyOrders() {
           ) : !myPredictions || myPredictions.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-sm text-muted-foreground">
-                You have no predictions yet. Create one above!
+                No predictions yet. Create one above!
               </p>
             </div>
           ) : (
@@ -239,9 +233,7 @@ function MyOrders() {
                   currentAddress={address}
                   isConnected={isConnected}
                   isWalletLoading={isWalletLoading}
-                  onResolve={handleResolve}
                   onCancel={handleCancel}
-                  isResolving={isResolving && resolvingBetId === prediction.id}
                   isCancelling={isCancelling && cancellingId === prediction.id}
                   showCancel={true}
                 />
@@ -258,26 +250,16 @@ export function BetsTable() {
   const contract = useFootballBetsContract();
   const { data: bets, isLoading } = useBets();
   const { address, isConnected, isLoading: isWalletLoading } = useWallet();
-  const { resolveBet, isResolving, resolvingBetId } = useResolveBet();
   const { cancelPrediction, isCancelling, cancellingId } = useCancelPrediction();
-
-  const handleResolve = (id: string) => {
-    if (!address) {
-      error("Please connect your wallet to resolve markets");
-      return;
-    }
-    const confirmed = confirm(
-      "Resolve this prediction? This will fetch the live price from CoinGecko and determine the outcome."
-    );
-    if (confirmed) resolveBet(id);
-  };
 
   const handleCancel = (id: string) => {
     if (!address) {
       error("Please connect your wallet to cancel predictions");
       return;
     }
-    const confirmed = confirm("Cancel this prediction? Your stake will be refunded.");
+    const confirmed = confirm(
+      "Cancel this prediction? You will be charged a 2 GEN fee."
+    );
     if (confirmed) cancelPrediction(id);
   };
 
@@ -306,6 +288,8 @@ export function BetsTable() {
     );
   }
 
+  const today = new Date().toISOString().split("T")[0];
+
   return (
     <div className="space-y-4">
       <MyOrders />
@@ -332,9 +316,7 @@ export function BetsTable() {
                   currentAddress={address}
                   isConnected={isConnected}
                   isWalletLoading={isWalletLoading}
-                  onResolve={handleResolve}
                   onCancel={handleCancel}
-                  isResolving={isResolving && resolvingBetId === prediction.id}
                   isCancelling={isCancelling && cancellingId === prediction.id}
                   showCancel={true}
                 />
@@ -356,10 +338,10 @@ export function BetsTable() {
                 <tbody className="divide-y divide-white/5">
                   {bets.map((prediction) => {
                     const isOwner = address?.toLowerCase() === prediction.owner?.toLowerCase();
-                    const canResolve = isConnected && address && isOwner &&
-                      !prediction.has_resolved && !prediction.is_cancelled && !isWalletLoading;
                     const canCancel = isConnected && address && isOwner &&
-                      !prediction.has_resolved && !prediction.is_cancelled && !isWalletLoading;
+                      !prediction.has_resolved && !prediction.is_cancelled &&
+                      !isWalletLoading && prediction.deadline > today;
+                    const isExpired = prediction.deadline <= today;
 
                     return (
                       <tr key={prediction.id} className="group hover:bg-white/5 transition-colors">
@@ -423,6 +405,11 @@ export function BetsTable() {
                               <XCircle className="w-3 h-3 mr-1" />
                               Cancelled
                             </Badge>
+                          ) : isExpired ? (
+                            <Badge variant="outline" className="text-orange-400 border-orange-500/30 text-xs">
+                              <Clock className="w-3 h-3 mr-1" />
+                              Resolving...
+                            </Badge>
                           ) : (
                             <Badge variant="outline" className="text-yellow-400 border-yellow-500/30 text-xs">
                               <Clock className="w-3 h-3 mr-1" />
@@ -439,34 +426,24 @@ export function BetsTable() {
                           </div>
                         </td>
                         <td className="px-3 py-3">
-                          <div className="flex gap-1">
-                            {canResolve && (
-                              <Button
-                                onClick={() => handleResolve(prediction.id)}
-                                disabled={isResolving && resolvingBetId === prediction.id}
-                                size="sm"
-                                variant="gradient"
-                                className="text-xs px-2"
-                              >
-                                {isResolving && resolvingBetId === prediction.id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : "Resolve"}
-                              </Button>
-                            )}
-                            {canCancel && (
-                              <Button
-                                onClick={() => handleCancel(prediction.id)}
-                                disabled={isCancelling && cancellingId === prediction.id}
-                                size="sm"
-                                variant="outline"
-                                className="text-xs px-2 text-destructive hover:text-destructive"
-                              >
-                                {isCancelling && cancellingId === prediction.id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : <XCircle className="w-3 h-3" />}
-                              </Button>
-                            )}
-                          </div>
+                          {canCancel && (
+                            <Button
+                              onClick={() => handleCancel(prediction.id)}
+                              disabled={isCancelling && cancellingId === prediction.id}
+                              size="sm"
+                              variant="outline"
+                              className="text-xs px-2 text-destructive hover:text-destructive"
+                            >
+                              {isCancelling && cancellingId === prediction.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <><XCircle className="w-3 h-3 mr-1" />Cancel</>
+                              )}
+                            </Button>
+                          )}
+                          {isExpired && !prediction.has_resolved && !prediction.is_cancelled && (
+                            <span className="text-xs text-orange-400">Auto-resolving...</span>
+                          )}
                         </td>
                       </tr>
                     );
