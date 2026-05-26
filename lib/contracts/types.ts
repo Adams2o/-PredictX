@@ -40,4 +40,4 @@ export interface MarketStats {
 }
 
 // Keep Bet as alias for backward compatibility
-export type Bet = Prediction;
+export type Bet = Prediction
