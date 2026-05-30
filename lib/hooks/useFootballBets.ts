@@ -338,7 +338,7 @@ export function useResolveBet() {
       setIsResolving(false);
       setResolvingBetId(null);
       error("Failed to resolve prediction", {
-        description: err?.message || "Plase try again.",
+        description: err?.message || "Please try again.",
       });
     },
   });
