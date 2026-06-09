@@ -61,6 +61,14 @@ Run the app:
 
 Open [http://localhost:3000](http://localhost:3000)
 
+## GenLayer Intelligent Contract
+
+Contract source:
+`Genlayer contract`
+
+Deployed contract:
+0x9d...2A55
+
 ## Smart Contract
 
 The smart contract is written in Python for GenLayer and deployed on GenLayer Studio. It:
