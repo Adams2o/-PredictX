@@ -63,12 +63,18 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## GenLayer Intelligent Contract
 
-Contract source:
-`Genlayer contract`
+Source code:
+contracts/predictx_market.py
 
-Deployed contract:
+Deployed Contract:
 0x9d...2A55
 
+The Intelligent Contract handles:
+- Prediction creation
+- Prediction settlement
+- Leaderboard calculations
+- User statistics
+  
 ## Smart Contract
 
 The smart contract is written in Python for GenLayer and deployed on GenLayer Studio. It:
